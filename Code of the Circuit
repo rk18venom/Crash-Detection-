@@ -1,0 +1,107 @@
+Code of The Circuit 
+
+
+#include <LiquidCrystal.h>
+#include<TinyGPS.h>
+float x,y,z;
+float gforce;
+int pin = 12;
+
+LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+TinyGPS gps;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(pin,OUTPUT);
+  lcd.begin(20, 4);
+  lcd.setCursor(4,1);
+  lcd.print("WELCOME....");
+  delay(2000);
+  lcd.clear();
+  delay(1000);
+  lcd.setCursor(1,0);
+  lcd.print("Technophile");
+  delay(300);
+  lcd.setCursor(5,1);
+  lcd.print("By");
+  delay(300);
+  lcd.setCursor(6,2);
+  lcd.print("Rahul Kashyap");
+  delay(300);
+  lcd.setCursor(3,3);
+  lcd.print("project");
+  delay(3000);
+  lcd.clear();
+  delay(1000);
+  lcd.print("->YR");
+  lcd.setCursor(14,0);
+  lcd.print("21<-");
+}
+
+void loop() {
+ bool newData = false;
+ unsigned long chars;
+ unsigned short sentences, failed;
+ for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (Serial.available())
+    {
+      char c = Serial.read();
+      //Serial.print(c);
+      if (gps.encode(c)) 
+        newData = true;  
+    }
+  }
+
+ 
+  
+
+  x = ((analogRead(A0)*2.0)/1024.0)-1;  
+  y = ((analogRead(A1)*2.0)/1024.0)-1;
+  z = ((analogRead(A2)*2.0)/1024.0)-1; 
+  gforce = sqrt(pow(x,2)+pow(y,2)+pow(z,2));
+  lcd.setCursor(6,1);
+  lcd.print("gX = ");
+  lcd.print(x);
+  lcd.setCursor(6,2);
+  lcd.print("gY = ");
+  lcd.print(y);
+  lcd.setCursor(6,3);
+  lcd.print("gZ = ");
+  lcd.print(z);
+  delay(2000);
+  lcd.clear();
+  delay(2000);
+  lcd.setCursor(4,2);
+  lcd.print("g-force = ");
+  lcd.print(gforce*(9.8));
+  if(gforce*9.8>12 and newData){
+    digitalWrite(pin , HIGH);
+    float flat, flon;
+    unsigned long age;
+    gps.f_get_position(&flat, &flon, &age);  
+    Serial.println("Location tracked when object is Crashed by any thing"); 
+    Serial.println(" ");
+    Serial.print("Latitude = ");
+    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+    Serial.print(" Longitude = ");
+    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+  }else{
+    digitalWrite(pin , LOW);
+    float flat, flon;
+    unsigned long age;
+    gps.f_get_position(&flat, &flon, &age);  
+    Serial.println("Location tracked when object is not Crashed by any thing"); 
+    Serial.println(" ");
+    Serial.print("Latitude = ");
+    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+    Serial.print(" Longitude = ");
+    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+  }
+  
+  Serial.println(failed);
+ // if (chars == 0)
+   // Serial.println("** No characters received from GPS: check wiring **");
+
+ delay(2000);
+}
